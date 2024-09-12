@@ -30,13 +30,46 @@ class UserResource extends Resource
                     ->required(),
                 Forms\Components\TextInput::make('email')
                     ->email()
-                    ->required()
-                    ->unique(ignoreRecord: True),
+                    ->required(),
                 Forms\Components\TextInput::make('password')
                     ->password()
+                    ->required(fn($livewire) => $livewire instanceof Pages\CreateUser) // Required only on creation
+                    ->dehydrateStateUsing(fn($state) => bcrypt($state)) // Encrypt password
+                    ->hiddenOn('edit'), // Hide on edit if you don’t want to display it
+                Forms\Components\Select::make('roles')
+                    ->relationship('roles', 'name') // For role selection (Filament Shield)
+                    ->multiple()
+                    ->preload()
                     ->required(),
-                Forms\Components\CheckboxList::make('roles')
-                    ->relationship('roles', 'name')
+
+                // MultiSelect for assigning branches
+                Forms\Components\Select::make('branches')
+                    ->label('Assigned Branches')
+                    ->relationship('branches', 'name') // Specify the relationship method
+                    ->placeholder('Select branches')
+                    ->searchable()
+                    ->preload()
+                    ->multiple()
+                    ->required(false),
+
+                // MultiSelect for assigning regions
+                Forms\Components\MultiSelect::make('regions')
+                    ->label('Assigned Regions')
+                    ->relationship('regions', 'name') // Specify the relationship method
+                    ->placeholder('Select regions')
+                    ->searchable()
+                    ->preload()
+                    ->required(false),
+
+                // MultiSelect for assigning countries
+                Forms\Components\MultiSelect::make('countries')
+                    ->label('Assigned Countries')
+                    ->relationship('countries', 'name') // Specify the relationship method
+                    ->placeholder('Select countries')
+                    ->searchable()
+                    ->preload()
+                    ->required(false),
+
             ]);
     }
 

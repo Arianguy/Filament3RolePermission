@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Region;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -44,5 +45,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'user_branches');
+    }
+
+    public function regions()
+    {
+        return $this->belongsToMany(Region::class, 'user_regions');
+    }
+
+    public function countries()
+    {
+        return $this->belongsToMany(Country::class, 'user_countries');
     }
 }
