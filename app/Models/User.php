@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\Region;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany; // Correct import for BelongsToMany
+use App\Models\Region;
+use App\Models\Branch;
+use App\Models\Country; // Ensure the Country model is correctly imported
 
 class User extends Authenticatable
 {
@@ -35,29 +37,35 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast to native types.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 
-    public function branches()
-    {
-        return $this->belongsToMany(Branch::class, 'user_branches');
-    }
-
-    public function regions()
+    /**
+     * Define the many-to-many relationship between User and Region.
+     */
+    public function regions(): BelongsToMany
     {
         return $this->belongsToMany(Region::class, 'user_regions');
     }
 
-    public function countries()
+    /**
+     * Define the many-to-many relationship between User and Branch.
+     */
+    public function branches(): BelongsToMany
+    {
+        return $this->belongsToMany(Branch::class, 'user_branches');
+    }
+
+    /**
+     * Define the many-to-many relationship between User and Country.
+     */
+    public function countries(): BelongsToMany
     {
         return $this->belongsToMany(Country::class, 'user_countries');
     }
