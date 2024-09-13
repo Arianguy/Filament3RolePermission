@@ -148,35 +148,22 @@ class BranchResource extends Resource
     {
         $user = Auth::user();
 
-        // If no authenticated user, return an empty result set
         if (!$user) {
-            return $query->whereRaw('1 = 0');
+            return $query->whereRaw('1 = 0'); // No authenticated user
         }
 
         // Ensure the query builder is using the correct model
         if (!$query->getModel()) {
+            // Reset the query to use the correct model
             $query = Branch::query();
         }
 
-        // Cache user-related data to minimize redundant queries
-        $branchIds = cache()->remember("user:{$user->id}:branches", now()->addMinutes(5), function () use ($user) {
-            return $user->branches()->pluck('branches.id')->toArray();
-        });
+        // Retrieve IDs of branches, regions, and countries associated with the user
+        $branchIds = $user->branches()->pluck('branches.id')->toArray();
+        $regionIds = $user->regions()->pluck('regions.id')->toArray();
+        $countryIds = $user->countries()->pluck('countries.id')->toArray();
 
-        $regionIds = cache()->remember("user:{$user->id}:regions", now()->addMinutes(5), function () use ($user) {
-            return $user->regions()->pluck('regions.id')->toArray();
-        });
-
-        $countryIds = cache()->remember("user:{$user->id}:countries", now()->addMinutes(5), function () use ($user) {
-            return $user->countries()->pluck('countries.id')->toArray();
-        });
-
-        // If no associated data, return an empty result set
-        if (empty($branchIds) && empty($regionIds) && empty($countryIds)) {
-            return $query->whereRaw('1 = 0');
-        }
-
-        // Apply conditional filtering
+        // Apply the filtering logic
         return $query->where(function ($query) use ($branchIds, $regionIds, $countryIds) {
             if (!empty($branchIds)) {
                 $query->orWhereIn('id', $branchIds);
