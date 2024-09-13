@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->string('name')->unique();
             $table->string('area');
-            $table->string('region');
+            $table->unsignedBigInteger('region_id'); // Corrected to region_id for relationship
+            $table->foreign('region_id')->references('id')->on('regions')->onDelete('cascade'); // Added foreign key constraint
             $table->string('phone')->unique();
             $table->string('email');
             $table->string('status')->default('active');

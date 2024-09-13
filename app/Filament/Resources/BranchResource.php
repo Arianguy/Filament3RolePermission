@@ -2,15 +2,16 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Forms;
+use Filament\Tables;
 use App\Models\Branch;
 use App\Models\Region;
 use App\Models\Country;
-use Filament\Forms;
-use Filament\Tables;
 use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\BranchResource\Pages;
-use Illuminate\Support\Facades\Auth;
+
 
 class BranchResource extends Resource
 {
@@ -18,9 +19,6 @@ class BranchResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    /**
-     * Define the form schema for creating and editing branches.
-     */
     public static function form(Forms\Form $form): Forms\Form
     {
         return $form
@@ -42,7 +40,7 @@ class BranchResource extends Resource
 
                 Forms\Components\Select::make('region_id')
                     ->label('Region')
-                    ->options(Region::pluck('name', 'id')->toArray())
+                    ->relationship('region', 'name')
                     ->searchable()
                     ->required(),
 
@@ -69,15 +67,12 @@ class BranchResource extends Resource
 
                 Forms\Components\Select::make('country_id')
                     ->label('Country')
-                    ->options(Country::pluck('name', 'id')->toArray())
+                    ->relationship('country', 'name')
                     ->searchable()
                     ->required(),
             ]);
     }
 
-    /**
-     * Define the table columns for listing branches.
-     */
     public static function table(Tables\Table $table): Tables\Table
     {
         return $table
@@ -134,6 +129,9 @@ class BranchResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->query(function (Builder $query) {
+                return static::applyUserRegionBranchFilter($query);
+            })
             ->filters([
                 // Define filters if needed
             ])
@@ -141,33 +139,60 @@ class BranchResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->query(function (Builder $query) {
-                return static::applyUserRegionBranchFilter($query);
-            })
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 
-    /**
-     * Apply user-specific filtering to the Branch table query.
-     */
     protected static function applyUserRegionBranchFilter(Builder $query): Builder
     {
         $user = Auth::user();
 
-        if ($user && $user->regions()->exists()) {
-            $regionIds = $user->regions()->pluck('id')->toArray();
-            return $query->whereIn('region_id', $regionIds);
+        // If no authenticated user, return an empty result set
+        if (!$user) {
+            return $query->whereRaw('1 = 0');
         }
 
-        if ($user && $user->branches()->exists()) {
-            $branchIds = $user->branches()->pluck('id')->toArray();
-            return $query->whereIn('id', $branchIds);
+        // Ensure the query builder is using the correct model
+        if (!$query->getModel()) {
+            $query = Branch::query();
         }
 
-        return $query; // No filtering, return all branches
+        // Cache user-related data to minimize redundant queries
+        $branchIds = cache()->remember("user:{$user->id}:branches", now()->addMinutes(5), function () use ($user) {
+            return $user->branches()->pluck('branches.id')->toArray();
+        });
+
+        $regionIds = cache()->remember("user:{$user->id}:regions", now()->addMinutes(5), function () use ($user) {
+            return $user->regions()->pluck('regions.id')->toArray();
+        });
+
+        $countryIds = cache()->remember("user:{$user->id}:countries", now()->addMinutes(5), function () use ($user) {
+            return $user->countries()->pluck('countries.id')->toArray();
+        });
+
+        // If no associated data, return an empty result set
+        if (empty($branchIds) && empty($regionIds) && empty($countryIds)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        // Apply conditional filtering
+        return $query->where(function ($query) use ($branchIds, $regionIds, $countryIds) {
+            if (!empty($branchIds)) {
+                $query->orWhereIn('id', $branchIds);
+            }
+
+            if (!empty($regionIds)) {
+                $query->orWhereIn('region_id', $regionIds);
+            }
+
+            if (!empty($countryIds)) {
+                $query->orWhereIn('country_id', $countryIds);
+            }
+        });
     }
+
+
 
     public static function getRelations(): array
     {

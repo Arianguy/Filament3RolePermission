@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Branch extends Model
@@ -19,8 +20,15 @@ class Branch extends Model
         'email',
         'status',
         'country_id',
+        'region_id',
     ];
-    public function country()
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(Region::class);
+    }
+
+    // Correctly define the relationship with Country
+    public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
@@ -28,10 +36,5 @@ class Branch extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_branches');
-    }
-
-    public function region()
-    {
-        return $this->belongsTo(Region::class);
     }
 }

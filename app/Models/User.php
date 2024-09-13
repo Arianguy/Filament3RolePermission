@@ -51,17 +51,13 @@ class User extends Authenticatable
      */
     public function regions(): BelongsToMany
     {
-        return $this->belongsToMany(Region::class, 'user_regions');
+        return $this->belongsToMany(Region::class, 'user_regions', 'user_id', 'region_id');
     }
 
-    /**
-     * Define the many-to-many relationship between User and Branch.
-     */
     public function branches(): BelongsToMany
     {
-        return $this->belongsToMany(Branch::class, 'user_branches');
+        return $this->belongsToMany(Branch::class, 'user_branches', 'user_id', 'branch_id');
     }
-
     /**
      * Define the many-to-many relationship between User and Country.
      */

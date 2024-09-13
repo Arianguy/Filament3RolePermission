@@ -15,10 +15,10 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Savio',
-            'email' => 'savio@ashtelgroup.com.com',
-        ]);
+        // User::factory()->create([
+        //    'name' => 'Savio',
+        //      'email' => 'savio@ashtelgroup.com',
+        // ]);
 
         $this->call(CountriesTableSeeder::class);
     }
