@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use Log;
 use App\Models\Cpu;
 use App\Models\Ram;
 use App\Models\Vpn;
@@ -253,7 +254,7 @@ class ComputerResource extends Resource
                 // Disks Repeater
                 Forms\Components\Repeater::make('disks')
                     ->label('Disks')
-                    ->relationship('disks')
+                    // ->relationship('disks')
                     ->schema([
                         TextInput::make('disk_name')
                             ->label('Disk Name')
@@ -270,7 +271,7 @@ class ComputerResource extends Resource
                                 'SATA SSD' => 'SATA SSD',
                             ])
                             ->required(),
-                        TextInput::make('Speed')
+                        TextInput::make('speed')
                             ->label('Speed')
                             ->nullable(),
                     ])
@@ -284,17 +285,37 @@ class ComputerResource extends Resource
     {
         return $table
             ->columns([
-                // Define your table columns here
                 Tables\Columns\TextColumn::make('name')->label('Computer Name'),
-                Tables\Columns\TextColumn::make('brand.name')->label('Brand'),
-                Tables\Columns\TextColumn::make('model.name')->label('Model'),
-                Tables\Columns\TextColumn::make('cpu.name')->label('CPU'),
-                Tables\Columns\TextColumn::make('ram.capacity')->label('RAM'),
+                Tables\Columns\TextColumn::make('brand.name')->label('Brand')
+                    ->getStateUsing(fn($record) => $record->brand->name ?? 'N/A'),
+                Tables\Columns\TextColumn::make('computerModel.name')->label('Model')
+                    ->getStateUsing(fn($record) => $record->computerModel->name ?? 'N/A'),
+                Tables\Columns\TextColumn::make('cpu.name')->label('CPU')
+                    ->getStateUsing(fn($record) => $record->cpu->name ?? 'N/A'),
+                Tables\Columns\TextColumn::make('ram.capacity')->label('RAM')
+                    ->getStateUsing(fn($record) => $record->ram->capacity ?? 'N/A'),
                 Tables\Columns\TextColumn::make('disks')
                     ->label('Disks')
-                    ->formatStateUsing(function ($record) {
-                        return $record->disks->pluck('disk_name')->join(', ');
-                    }),
+                    ->getStateUsing(function ($record) {
+                        $state = $record->disks;
+                        if (is_array($state) && !empty($state)) {
+                            // Map each disk's information into the desired format
+                            $formattedDisks = array_map(function ($disk) {
+                                $diskName = $disk['disk_name'] ?? 'Unnamed Disk';
+                                $capacity = $disk['capacity'] ?? 'Unknown Capacity';
+                                $type = $disk['type'] ?? 'Unknown Type';
+                                $interface = $disk['speed'] ?? 'Unknown Interface';
+
+                                // Combine into the desired format
+                                return "{$diskName} : {$capacity} {$type} {$interface}";
+                            }, $state);
+
+                            // Join each formatted disk's information with a new line
+                            return implode('<br />', $formattedDisks);
+                        }
+                        return 'No Disks';
+                    })
+                    ->html(), // This enables HTML rendering for the column
             ])
             ->filters([
                 //

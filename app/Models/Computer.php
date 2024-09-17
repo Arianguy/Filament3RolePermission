@@ -29,11 +29,13 @@ class Computer extends Model
         'ram_id',
         'os_id',
         'vpn_id',
+        'disks',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
         'byod' => 'boolean',
+        'disks' => 'array',
     ];
 
     // Relationships
