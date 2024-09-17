@@ -125,32 +125,62 @@ class ComputerResource extends Resource
                 TextInput::make('cost')->numeric()->required(),
                 DatePicker::make('purchase_date')->required(),
                 Toggle::make('byod')->label('BYOD')->default(false),
-                Select::make('brand_id')
-                    ->label('Brand')
-                    ->relationship('brand', 'name')
-                    ->searchable()
-                    ->required()
-                    ->preload()
-                    ->createOptionForm([
-                        TextInput::make('name')->required(),
-                        TextInput::make('website')->url()->nullable(),
-                    ]),
 
                 Select::make('category_id')
                     ->label('Category')
-                    ->options(Category::all()->pluck('name', 'id'))
+                    ->relationship('category', 'name')
+                    ->preload()
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->createOptionForm([
+                        TextInput::make('name')
+                            ->required()
+                            ->placeholder('Laptop'),
+                    ]),
+
                 Select::make('model_id')
                     ->label('Model')
-                    ->options(ComputerModel::all()->pluck('name', 'id'))
+                    ->relationship('computerModel', 'name', function ($query) {
+                        $query->with('brand');
+                    })
+                    ->getOptionLabelFromRecordUsing(function ($record) {
+                        return "{$record->brand->name}  {$record->name}";
+                    })
                     ->searchable()
-                    ->required(),
+                    ->preload()
+                    ->required()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Model Name')
+                            ->required(),
+                        Forms\Components\Select::make('brand_id')
+                            ->label('Brand')
+                            ->relationship('brand', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->createOptionForm([
+                                TextInput::make('name')->label('Brand Name')->required(),
+                                TextInput::make('website')->url()->nullable(),
+                            ]),
+                    ]),
+
+
+
                 Select::make('supplier_id')
                     ->label('Supplier')
-                    ->options(Supplier::all()->pluck('name', 'id'))
+                    ->relationship('supplier', 'name')
+                    //->options(Supplier::all()->pluck('name', 'id'))
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->createOptionForm([
+                        TextInput::make('name')->required(),
+                        TextInput::make('phone')->required(),
+                        TextInput::make('email')->required(),
+                        TextInput::make('contact_person')->required(),
+                    ]),
+
+
                 Select::make('cpu_id')
                     ->label('CPU')
                     ->relationship('cpu', 'name')
@@ -174,7 +204,7 @@ class ComputerResource extends Resource
                     ->searchable()
                     ->required()
                     ->getSearchResultsUsing(function (string $searchQuery) {
-                        return \App\Models\RAM::query()
+                        return RAM::query()
                             ->where('capacity', 'like', "%{$searchQuery}%")
                             ->orWhere('speed', 'like', "%{$searchQuery}%")
                             ->get()
@@ -194,9 +224,20 @@ class ComputerResource extends Resource
 
                 Select::make('os_id')
                     ->label('Operating System')
-                    ->options(OperatingSystem::all()->pluck('name', 'id'))
+                    ->options(OperatingSystem::pluck('name', 'id')->toArray())
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->createOptionForm([
+                        TextInput::make('name')->required(),
+                        TextInput::make('type')->required(),
+                    ])
+                    ->createOptionUsing(function (array $data) {
+                        $operatingSystem = OperatingSystem::create($data);
+                        return $operatingSystem->id;
+                    }),
+
+
+
                 Select::make('vpn_id')
                     ->label('VPN')
                     ->options(Vpn::all()->pluck('name', 'id'))
@@ -228,7 +269,7 @@ class ComputerResource extends Resource
                             ->nullable(),
                     ])
                     ->collapsible()
-                    ->createItemButtonLabel('Add Disk')
+                    ->addActionLabel('Add Disk')
                     ->columns(2),
             ]);
     }

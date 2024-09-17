@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\ComputerModel;
+use App\Models\OperatingSystem;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -50,9 +52,9 @@ class Computer extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function model()
+    public function computermodel()
     {
-        return $this->belongsTo(ComputerModel::class);
+        return $this->belongsTo(ComputerModel::class, 'model_id');
     }
 
     public function supplier()
