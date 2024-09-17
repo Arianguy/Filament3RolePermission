@@ -21,7 +21,7 @@ class Computer extends Model
         'warranty',
         'byod',
         'branch_id',
-        'brand_id',
+        // 'brand_id',
         'category_id',
         'model_id',
         'supplier_id',

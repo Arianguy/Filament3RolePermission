@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\ComponentContainer;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
@@ -119,7 +120,7 @@ class ComputerResource extends Resource
                     }),
 
 
-                TextInput::make('pc_code')->required(),
+                TextInput::make('pc_code'),
                 TextInput::make('name')->required(),
                 TextInput::make('imei')->required(),
                 TextInput::make('cost')->numeric()->required(),
@@ -240,9 +241,14 @@ class ComputerResource extends Resource
 
                 Select::make('vpn_id')
                     ->label('VPN')
-                    ->options(Vpn::all()->pluck('name', 'id'))
+                    ->relationship('vpn', 'name')
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->preload()
+                    ->createOptionForm([
+                        TextInput::make('name')->required(),
+                        TextInput::make('pass')->required(),
+                    ]),
 
                 // Disks Repeater
                 Forms\Components\Repeater::make('disks')
@@ -264,8 +270,8 @@ class ComputerResource extends Resource
                                 'SATA SSD' => 'SATA SSD',
                             ])
                             ->required(),
-                        TextInput::make('interface')
-                            ->label('Interface')
+                        TextInput::make('Speed')
+                            ->label('Speed')
                             ->nullable(),
                     ])
                     ->collapsible()

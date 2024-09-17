@@ -18,10 +18,10 @@ return new class extends Migration
             $table->string('imei');
             $table->decimal('cost', 10, 2);
             $table->date('purchase_date');
-            $table->integer('warranty'); // Number of months or years
+            $table->date('warranty'); // Number of months or years
             $table->boolean('byod');
             $table->foreignId('branch_id')->constrained()->onDelete('cascade');
-            $table->foreignId('brand_id')->constrained()->onDelete('cascade');
+            // $table->foreignId('brand_id')->constrained()->onDelete('cascade');
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->foreignId('model_id')->constrained('computer_models')->onDelete('cascade');
             $table->foreignId('supplier_id')->constrained()->onDelete('cascade');
@@ -29,6 +29,7 @@ return new class extends Migration
             $table->foreignId('ram_id')->constrained()->onDelete('cascade');
             $table->foreignId('os_id')->constrained('operating_systems')->onDelete('cascade');
             $table->foreignId('vpn_id')->constrained('vpns')->onDelete('cascade');
+            $table->json('disks')->nullable();
             $table->timestamps();
         });
     }
