@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Cpu extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'core', 'speed', 'company'];
+    protected $fillable = ['name', 'core', 'speed', 'gen', 'company'];
 
     // Relationships
     public function computers()

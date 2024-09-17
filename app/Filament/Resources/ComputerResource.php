@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use Illuminate\Support\Facades\Auth;
 use App\Models\Cpu;
 use App\Models\Ram;
 use App\Models\Vpn;
@@ -17,8 +16,10 @@ use Filament\Tables\Table;
 use App\Models\ComputerModel;
 use App\Models\OperatingSystem;
 use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\ComponentContainer;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
@@ -160,19 +161,35 @@ class ComputerResource extends Resource
                         TextInput::make('name')->required(),
                         TextInput::make('core')->required(),
                         TextInput::make('speed')->required(),
+                        TextInput::make('gen')->required(),
                         TextInput::make('company')->required(),
                     ]),
 
                 Select::make('ram_id')
                     ->label('RAM')
-                    ->options(function () {
-                        return \App\Models\RAM::all()->mapWithKeys(function ($ram) {
-                            return [$ram->id => "{$ram->capacity} GB - {$ram->speed} MHz"];
-                        })->toArray();
+                    ->relationship('ram', 'id')
+                    ->getOptionLabelFromRecordUsing(function (RAM $ram) {
+                        return "{$ram->capacity} - {$ram->speed} MHz";
                     })
                     ->searchable()
                     ->required()
-                    ->preload(),
+                    ->getSearchResultsUsing(function (string $searchQuery) {
+                        return \App\Models\RAM::query()
+                            ->where('capacity', 'like', "%{$searchQuery}%")
+                            ->orWhere('speed', 'like', "%{$searchQuery}%")
+                            ->get()
+                            ->mapWithKeys(function ($ram) {
+                                return [$ram->id => "{$ram->capacity} - {$ram->speed} MHz"];
+                            });
+                    })
+                    ->createOptionForm([
+                        TextInput::make('capacity')
+                            ->required()
+                            ->placeholder('8 GB'),
+                        TextInput::make('speed')
+                            ->required()
+                            ->placeholder('DDR5-5000'),
+                    ]),
 
 
                 Select::make('os_id')

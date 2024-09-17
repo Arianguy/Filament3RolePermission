@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('core');
             $table->string('speed'); // e.g., "3.1 GHz"
+            $table->string('gen');
             $table->string('company');
             $table->timestamps();
         });
