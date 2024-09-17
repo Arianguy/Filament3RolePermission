@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('rams', function (Blueprint $table) {
             $table->id();
             $table->string('capacity'); // e.g., "8 GB"
-            $table->string('type');     // e.g., "DDR4"
-            $table->string('speed');    // e.g., "2400 MHz"
+            //$table->string('type');     // e.g., "DDR4"
+            $table->string('speed');    // e.g., "DDR4-2400 MHz"
             $table->timestamps();
         });
     }

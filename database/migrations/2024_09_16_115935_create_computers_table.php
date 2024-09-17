@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('purchase_date');
             $table->integer('warranty'); // Number of months or years
             $table->boolean('byod');
+            $table->foreignId('branch_id')->constrained()->onDelete('cascade');
             $table->foreignId('brand_id')->constrained()->onDelete('cascade');
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->foreignId('model_id')->constrained('computer_models')->onDelete('cascade');

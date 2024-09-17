@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Computer extends Model
 {
-    use HasFactory;
+    use HasFactory, HasRoles;
 
     protected $fillable = [
         'pc_code',
@@ -17,6 +18,7 @@ class Computer extends Model
         'purchase_date',
         'warranty',
         'byod',
+        'branch_id',
         'brand_id',
         'category_id',
         'model_id',
@@ -33,6 +35,11 @@ class Computer extends Model
     ];
 
     // Relationships
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     public function brand()
     {
         return $this->belongsTo(Brand::class);
