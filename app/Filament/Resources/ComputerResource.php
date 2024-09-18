@@ -15,6 +15,8 @@ use App\Models\Supplier;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Models\ComputerModel;
+use Filament\Facades\Filament;
+use Tables\Columns\TextColumn;
 use App\Models\OperatingSystem;
 use Filament\Resources\Resource;
 use Illuminate\Support\Facades\Auth;
@@ -25,16 +27,19 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Infolists\Components\Section;
 use App\Filament\Resources\ComputerResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ComputerResource\RelationManagers;
 use App\Models\Branch; // Ensure you include this use statement
+use Filament\Tables\Columns\BadgeColumn;
+use Carbon\Carbon;
 
 class ComputerResource extends Resource
 {
     protected static ?string $model = Computer::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-computer-desktop';
 
     public static function getEloquentQuery(): Builder
     {
@@ -72,6 +77,10 @@ class ComputerResource extends Resource
         });
     }
 
+    public static function query(): Builder
+    {
+        return parent::query()->with('brand');
+    }
 
     public static function form(Form $form): Form
     {
@@ -126,6 +135,7 @@ class ComputerResource extends Resource
                 TextInput::make('imei')->required(),
                 TextInput::make('cost')->numeric()->required(),
                 DatePicker::make('purchase_date')->required(),
+                TextInput::make('warranty')->label('Warranty Months')->numeric()->required(),
                 Toggle::make('byod')->label('BYOD')->default(false),
 
                 Select::make('category_id')
@@ -258,10 +268,12 @@ class ComputerResource extends Resource
                     ->schema([
                         TextInput::make('disk_name')
                             ->label('Disk Name')
-                            ->required(),
+                            ->required()
+                            ->placeholder('Disk 1'),
                         TextInput::make('capacity')
                             ->label('Capacity')
-                            ->required(),
+                            ->required()
+                            ->placeholder('256 Gb'),
                         Select::make('type')
                             ->label('Type')
                             ->options([
@@ -273,7 +285,8 @@ class ComputerResource extends Resource
                             ->required(),
                         TextInput::make('speed')
                             ->label('Speed')
-                            ->nullable(),
+                            ->nullable()
+                            ->placeholder('5400 Rpm or 1050Mb/s'),
                     ])
                     ->collapsible()
                     ->addActionLabel('Add Disk')
@@ -285,15 +298,42 @@ class ComputerResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Computer Name'),
-                Tables\Columns\TextColumn::make('brand.name')->label('Brand')
-                    ->getStateUsing(fn($record) => $record->brand->name ?? 'N/A'),
-                Tables\Columns\TextColumn::make('computerModel.name')->label('Model')
-                    ->getStateUsing(fn($record) => $record->computerModel->name ?? 'N/A'),
-                Tables\Columns\TextColumn::make('cpu.name')->label('CPU')
-                    ->getStateUsing(fn($record) => $record->cpu->name ?? 'N/A'),
+                Tables\Columns\TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->getStateUsing(fn($record) => $record->branch->name ?? 'N/A')
+                    ->sortable()
+                    ->searchable()
+                    ->hidden(),
+                Tables\Columns\TextColumn::make('branch.code')
+                    ->label('Branch')
+                    ->getStateUsing(fn($record) => $record->branch->code ?? 'N/A')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('imei')
+                    ->label('Serial')
+                    ->sortable()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('name')->label('PC Name'),
+                Tables\Columns\TextColumn::make('computerModel.brand.name')
+                    ->label('Brand')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('computerModel.brand_id')->label('Model')
+                    ->getStateUsing(fn($record) => $record->computerModel->name ?? 'N/A')->sortable(),
+                Tables\Columns\TextColumn::make('cpu_details')
+                    ->label('CPU Details')
+                    ->getStateUsing(function ($record) {
+                        if ($record->cpu) {
+                            return $record->cpu->company . ' ' . $record->cpu->name . ' ' . $record->cpu->core . ' ' . $record->cpu->speed . ' ' . 'Gen ' . $record->cpu->gen;
+                        }
+                        return 'N/A';
+                    }),
+                //   Tables\Columns\TextColumn::make('cpu.name')->label('CPU')
+                //      ->getStateUsing(fn($record) => $record->cpu->name ?? 'N/A'),
+
                 Tables\Columns\TextColumn::make('ram.capacity')->label('RAM')
-                    ->getStateUsing(fn($record) => $record->ram->capacity ?? 'N/A'),
+                    ->getStateUsing(fn($record) => $record->ram->capacity ?? 'N/A')->sortable(),
                 Tables\Columns\TextColumn::make('disks')
                     ->label('Disks')
                     ->getStateUsing(function ($record) {
@@ -316,6 +356,35 @@ class ComputerResource extends Resource
                         return 'No Disks';
                     })
                     ->html(), // This enables HTML rendering for the column
+                Tables\Columns\TextColumn::make('os.name')->label('OS')
+                    ->getStateUsing(fn($record) => $record->os->name ?? 'N/A')->sortable(),
+                Tables\Columns\TextColumn::make('vpn.name')
+                    ->label('VPN Name')->searchable(),
+                Tables\Columns\TextColumn::make('vpn.pass')
+                    ->label('VPN Code')
+                    ->visible(fn() => Filament::auth()->user()->hasRole('super_admin')),
+
+                BadgeColumn::make('warranty_status')
+                    ->label('Warranty Status')
+                    ->getStateUsing(function ($record) {
+                        // Calculate expiry date by adding warranty months to purchase_date
+                        $expiryDate = Carbon::parse($record->purchase_date)->addMonths($record->warranty);
+                        $currentDate = Carbon::now();
+
+                        // Calculate the difference in days (as integer)
+                        $daysDifference = $currentDate->diffInDays($expiryDate, false);
+
+                        // Return the number of days remaining or expired (without decimals)
+                        if ($daysDifference >= 0) {
+                            return intval($daysDifference) . ' days Bal';
+                        } else {
+                            return intval(abs($daysDifference)) . ' days Exp';
+                        }
+                    })
+                    ->colors([
+                        'success' => fn($state) => str_contains($state, 'Bal'), // Green if warranty is valid
+                        'danger' => fn($state) => str_contains($state, 'Exp'), // Red if warranty has expired
+                    ]),
             ])
             ->filters([
                 //

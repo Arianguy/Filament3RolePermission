@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('imei');
             $table->decimal('cost', 10, 2);
             $table->date('purchase_date');
-            $table->date('warranty'); // Number of months or years
+            $table->unsignedInteger('warranty')->length(2); // Number of months or years
             $table->boolean('byod');
             $table->foreignId('branch_id')->constrained()->onDelete('cascade');
             // $table->foreignId('brand_id')->constrained()->onDelete('cascade');
