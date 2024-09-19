@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use Log;
+use Carbon\Carbon;
 use App\Models\Cpu;
 use App\Models\Ram;
 use App\Models\Vpn;
@@ -14,17 +14,21 @@ use App\Models\Computer;
 use App\Models\Supplier;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use App\Models\ComputerModel;
 use Filament\Facades\Filament;
 use Tables\Columns\TextColumn;
 use App\Models\OperatingSystem;
 use Filament\Resources\Resource;
+use Filament\Forms\Components\View;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\ComponentContainer;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Infolists\Components\Section;
@@ -32,8 +36,6 @@ use App\Filament\Resources\ComputerResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ComputerResource\RelationManagers;
 use App\Models\Branch; // Ensure you include this use statement
-use Filament\Tables\Columns\BadgeColumn;
-use Carbon\Carbon;
 
 class ComputerResource extends Resource
 {
@@ -81,6 +83,40 @@ class ComputerResource extends Resource
     {
         return parent::query()->with('brand');
     }
+
+    // protected static function boot()
+    // {
+    //     parent::boot();
+
+    //     static::creating(function ($computer) {
+    //         Log::info('Inside creating hook'); // Confirm this log appears
+    //         if (empty($computer->pc_code)) {
+    //             $computer->pc_code = strtoupper(Str::random(5));
+    //             Log::info('Generated PC Code: ' . $computer->pc_code); // Log the generated code
+    //         }
+    //     });
+    // }
+
+
+
+    protected $fillable = [
+        'branch_id',
+        'name',
+        'imei',
+        'cost',
+        'purchase_date',
+        'warranty',
+        'byod',
+        'category_id',
+        'model_id',
+        'supplier_id',
+        'cpu_id',
+        'ram_id',
+        'os_id',
+        'vpn_id',
+        'disks',
+        'pc_code' // Ensure pc_code is fillable
+    ];
 
     public static function form(Form $form): Form
     {
@@ -130,7 +166,15 @@ class ComputerResource extends Resource
                     }),
 
 
-                TextInput::make('pc_code'),
+                TextInput::make('pc_code')
+                    ->label('PC Code')
+                    ->required()
+                    ->readOnly()
+                    ->default(fn() => strtoupper(Str::random(5)))
+                    ->dehydrated(true),
+
+
+
                 TextInput::make('name')->required(),
                 TextInput::make('imei')->required(),
                 TextInput::make('cost')->numeric()->required(),

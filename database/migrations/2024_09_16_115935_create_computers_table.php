@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('computers', function (Blueprint $table) {
             $table->id();
-            $table->string('pc_code');
+            $table->string('pc_code')->nullable();
             $table->string('name');
             $table->string('imei');
             $table->decimal('cost', 10, 2);

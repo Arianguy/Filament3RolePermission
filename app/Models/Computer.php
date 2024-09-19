@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\ComputerModel;
 use App\Models\OperatingSystem;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
