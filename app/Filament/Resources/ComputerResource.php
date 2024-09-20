@@ -99,24 +99,24 @@ class ComputerResource extends Resource
 
 
 
-    protected $fillable = [
-        'branch_id',
-        'name',
-        'imei',
-        'cost',
-        'purchase_date',
-        'warranty',
-        'byod',
-        'category_id',
-        'model_id',
-        'supplier_id',
-        'cpu_id',
-        'ram_id',
-        'os_id',
-        'vpn_id',
-        'disks',
-        'pc_code' // Ensure pc_code is fillable
-    ];
+    // protected $fillable = [
+    //     'branch_id',
+    //     'name',
+    //     'imei',
+    //     'cost',
+    //     'purchase_date',
+    //     'warranty',
+    //     'byod',
+    //     'category_id',
+    //     'model_id',
+    //     'supplier_id',
+    //     'cpu_id',
+    //     'ram_id',
+    //     'os_id',
+    //     'vpn_id',
+    //     'disks',
+    //     'pc_code' // Ensure pc_code is fillable
+    // ];
 
     public static function form(Form $form): Form
     {
@@ -164,24 +164,18 @@ class ComputerResource extends Resource
 
                         return null;
                     }),
-
-
                 TextInput::make('pc_code')
                     ->label('PC Code')
                     ->required()
                     ->readOnly()
                     ->default(fn() => strtoupper(Str::random(5)))
                     ->dehydrated(true),
-
-
-
                 TextInput::make('name')->required(),
                 TextInput::make('imei')->required(),
                 TextInput::make('cost')->numeric()->required(),
                 DatePicker::make('purchase_date')->required(),
                 TextInput::make('warranty')->label('Warranty Months')->numeric()->required(),
                 Toggle::make('byod')->label('BYOD')->default(false),
-
                 Select::make('category_id')
                     ->label('Category')
                     ->relationship('category', 'name')
@@ -220,9 +214,6 @@ class ComputerResource extends Resource
                                 TextInput::make('website')->url()->nullable(),
                             ]),
                     ]),
-
-
-
                 Select::make('supplier_id')
                     ->label('Supplier')
                     ->relationship('supplier', 'name')
@@ -235,8 +226,6 @@ class ComputerResource extends Resource
                         TextInput::make('email')->required(),
                         TextInput::make('contact_person')->required(),
                     ]),
-
-
                 Select::make('cpu_id')
                     ->label('CPU')
                     ->relationship('cpu', 'name')
@@ -250,7 +239,6 @@ class ComputerResource extends Resource
                         TextInput::make('gen')->required(),
                         TextInput::make('company')->required(),
                     ]),
-
                 Select::make('ram_id')
                     ->label('RAM')
                     ->relationship('ram', 'id')
@@ -276,8 +264,6 @@ class ComputerResource extends Resource
                             ->required()
                             ->placeholder('DDR5-5000'),
                     ]),
-
-
                 Select::make('os_id')
                     ->label('Operating System')
                     ->options(OperatingSystem::pluck('name', 'id')->toArray())
@@ -291,9 +277,6 @@ class ComputerResource extends Resource
                         $operatingSystem = OperatingSystem::create($data);
                         return $operatingSystem->id;
                     }),
-
-
-
                 Select::make('vpn_id')
                     ->label('VPN')
                     ->relationship('vpn', 'name')
@@ -308,7 +291,6 @@ class ComputerResource extends Resource
                 // Disks Repeater
                 Forms\Components\Repeater::make('disks')
                     ->label('Disks')
-                    // ->relationship('disks')
                     ->schema([
                         TextInput::make('disk_name')
                             ->label('Disk Name')
@@ -353,11 +335,14 @@ class ComputerResource extends Resource
                     ->getStateUsing(fn($record) => $record->branch->code ?? 'N/A')
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('pc_code')
+                    ->label('PC Code')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('imei')
                     ->label('Serial')
                     ->sortable()
                     ->searchable(),
-
                 Tables\Columns\TextColumn::make('name')->label('PC Name'),
                 Tables\Columns\TextColumn::make('computerModel.brand.name')
                     ->label('Brand')
@@ -373,9 +358,6 @@ class ComputerResource extends Resource
                         }
                         return 'N/A';
                     }),
-                //   Tables\Columns\TextColumn::make('cpu.name')->label('CPU')
-                //      ->getStateUsing(fn($record) => $record->cpu->name ?? 'N/A'),
-
                 Tables\Columns\TextColumn::make('ram.capacity')->label('RAM')
                     ->getStateUsing(fn($record) => $record->ram->capacity ?? 'N/A')->sortable(),
                 Tables\Columns\TextColumn::make('disks')
@@ -407,17 +389,14 @@ class ComputerResource extends Resource
                 Tables\Columns\TextColumn::make('vpn.pass')
                     ->label('VPN Code')
                     ->visible(fn() => Filament::auth()->user()->hasRole('super_admin')),
-
                 BadgeColumn::make('warranty_status')
                     ->label('Warranty Status')
                     ->getStateUsing(function ($record) {
                         // Calculate expiry date by adding warranty months to purchase_date
                         $expiryDate = Carbon::parse($record->purchase_date)->addMonths($record->warranty);
                         $currentDate = Carbon::now();
-
                         // Calculate the difference in days (as integer)
                         $daysDifference = $currentDate->diffInDays($expiryDate, false);
-
                         // Return the number of days remaining or expired (without decimals)
                         if ($daysDifference >= 0) {
                             return intval($daysDifference) . ' days Bal';
