@@ -23,37 +23,87 @@ class InstallationResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('computer_id')
-                    ->label('Computer')
-                    ->relationship('computer', 'pc_code')
-                    ->required()
-                    ->searchable(),
-                Forms\Components\Select::make('license_id')
-                    ->label('Software License')
-                    ->options(function () {
-                        return \App\Models\License::with('software')
-                            ->get()
-                            ->mapWithKeys(function ($license) {
-                                return [
-                                    $license->id => optional($license->software)->name . ' - ' . $license->license_type,
-                                ];
-                            });
-                    })
-                    ->required()
-                    ->searchable(),
-                Forms\Components\TextInput::make('userid')
-                    ->label('User ID')
-                    ->nullable(),
-                Forms\Components\TextInput::make('password')
-                    ->label('Password')
-                    // ->password()
-                    ->nullable(),
-                Forms\Components\TextInput::make('key')
-                    ->label('License Key')
-                    ->nullable(),
-                Forms\Components\DatePicker::make('assigned_at')
-                    ->label('Assigned At')
-                    ->nullable(),
+                // Installation Details Section
+                Forms\Components\Section::make('Installation Details')
+                    ->description('Assign software licenses to computers and track their details.')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('computer_id')
+                                    ->label('Computer')
+                                    ->relationship('computer', 'pc_code')
+                                    ->required()
+                                    ->searchable()
+                                    ->placeholder('Select a Computer')
+                                    ->hint('Select the computer to which the software license will be assigned.')
+                                    ->helperText('Search for the computer by its PC code.'),
+
+                                Forms\Components\Select::make('license_id')
+                                    ->label('Software License')
+                                    ->options(function () {
+                                        return \App\Models\License::with('software')
+                                            ->get()
+                                            ->mapWithKeys(function ($license) {
+                                                return [
+                                                    $license->id => optional($license->software)->name . ' - ' . $license->license_type,
+                                                ];
+                                            });
+                                    })
+                                    ->required()
+                                    ->searchable()
+                                    ->placeholder('Select a Software License')
+                                    ->hint('Choose the appropriate software license for the selected computer.')
+                                    ->helperText('Search by software name and license type.'),
+                            ]),
+                    ])
+                    ->collapsed(false),  // Expand the section by default for visibility
+
+                // User Credentials Section
+                Forms\Components\Section::make('User Credentials')
+                    ->description('Details for the user who will be using the software.')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('userid')
+                                    ->label('User ID')
+                                    ->nullable()
+                                    ->placeholder('Enter User ID')
+                                    ->hint('Provide the User ID associated with this software.')
+                                    ->helperText('This is the ID for the user who will utilize the software license.'),
+
+                                Forms\Components\TextInput::make('password')
+                                    ->label('Password')
+                                    ->password()  // Mask the password field
+                                    ->nullable()
+                                    ->placeholder('Enter Password')
+                                    ->hint('Password associated with the software account, if applicable.')
+                                    ->helperText('Only enter this if the software requires credentials.'),
+                            ]),
+                    ])
+                    ->collapsed(),  // Initially collapsed for a cleaner view
+
+                // License Details Section
+                Forms\Components\Section::make('License Details')
+                    ->description('Information about the license key and assignment details.')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('key')
+                                    ->label('License Key')
+                                    ->nullable()
+                                    ->placeholder('Enter License Key')
+                                    ->hint('Provide the software license key.')
+                                    ->helperText('This is the unique key for activating the software.'),
+
+                                Forms\Components\DatePicker::make('assigned_at')
+                                    ->label('Assigned At')
+                                    ->nullable()
+                                    ->placeholder('Select Assignment Date')
+                                    ->hint('Specify the date when the software was assigned to the user.')
+                                    ->helperText('Enter the date this license was assigned to the computer.'),
+                            ]),
+                    ])
+                    ->collapsed(),  // Initially collapsed for simplicity
             ]);
     }
 
