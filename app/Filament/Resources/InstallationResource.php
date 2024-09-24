@@ -48,7 +48,7 @@ class InstallationResource extends Resource
                     ->label('Password')
                     // ->password()
                     ->nullable(),
-                Forms\Components\TextInput::make('license_key')
+                Forms\Components\TextInput::make('key')
                     ->label('License Key')
                     ->nullable(),
                 Forms\Components\DatePicker::make('assigned_at')
