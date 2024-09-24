@@ -12,9 +12,12 @@ class License extends Model
     protected $fillable = [
         'software_id',
         'license_type',
+        'category',
+        'seats_available',
+        'seats_used',
         'valid_from',
         'valid_to',
-        'license_key',
+        'license_key'
     ];
 
     protected $casts = [
@@ -30,5 +33,9 @@ class License extends Model
     public function installations()
     {
         return $this->hasMany(Installation::class);
+    }
+    public function licenseUsages()
+    {
+        return $this->hasMany(ComputerLicenseUsage::class);
     }
 }

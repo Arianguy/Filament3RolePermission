@@ -13,9 +13,13 @@ return new class extends Migration
     {
         Schema::create('installations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('computer_id')->constrained()->onDelete('cascade');
-            $table->foreignId('software_id')->constrained()->onDelete('cascade');
-            $table->foreignId('license_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('computer_id')->constrained('computers')->onDelete('cascade');
+            $table->foreignId('license_id')->nullable()->constrained('licenses')->onDelete('set null'); // Optional license
+            $table->foreignId('software_id')->nullable()->constrained('software')->onDelete('cascade'); // Optional software
+            $table->string('key')->nullable();  // License key, if applicable
+            $table->string('userid')->nullable();  // User ID, if applicable
+            $table->string('password')->nullable();  // Password, if applicable
+            $table->timestamp('assigned_at')->nullable();  // License assigned date, if applicable
             $table->timestamps();
         });
     }

@@ -84,39 +84,7 @@ class ComputerResource extends Resource
         return parent::query()->with('brand');
     }
 
-    // protected static function boot()
-    // {
-    //     parent::boot();
 
-    //     static::creating(function ($computer) {
-    //         Log::info('Inside creating hook'); // Confirm this log appears
-    //         if (empty($computer->pc_code)) {
-    //             $computer->pc_code = strtoupper(Str::random(5));
-    //             Log::info('Generated PC Code: ' . $computer->pc_code); // Log the generated code
-    //         }
-    //     });
-    // }
-
-
-
-    // protected $fillable = [
-    //     'branch_id',
-    //     'name',
-    //     'imei',
-    //     'cost',
-    //     'purchase_date',
-    //     'warranty',
-    //     'byod',
-    //     'category_id',
-    //     'model_id',
-    //     'supplier_id',
-    //     'cpu_id',
-    //     'ram_id',
-    //     'os_id',
-    //     'vpn_id',
-    //     'disks',
-    //     'pc_code' // Ensure pc_code is fillable
-    // ];
 
     public static function form(Form $form): Form
     {
@@ -317,6 +285,40 @@ class ComputerResource extends Resource
                     ->collapsible()
                     ->addActionLabel('Add Disk')
                     ->columns(2),
+
+                Forms\Components\Repeater::make('installations')
+                    ->relationship('installations')  // Define the relationship to the Installation model
+                    ->schema([
+                        Forms\Components\Select::make('license_id')
+                            ->label('Software License')
+                            ->options(function () {
+                                return \App\Models\License::with('software')
+                                    ->get()
+                                    ->mapWithKeys(function ($license) {
+                                        return [
+                                            $license->id => optional($license->software)->name . ' - ' . $license->license_type,
+                                        ];
+                                    });
+                            })
+                            ->required()
+                            ->searchable(),  // Allows searching for a license
+                        Forms\Components\TextInput::make('key')
+                            ->label('License Key')
+                            ->nullable(),
+                        Forms\Components\TextInput::make('userid')
+                            ->label('User ID')
+                            ->nullable(),
+                        Forms\Components\TextInput::make('password')
+                            ->label('Password')
+                            // ->password()  // Masked input for password fields
+                            ->nullable(),
+                        Forms\Components\DatePicker::make('assigned_at')
+                            ->label('Assigned Date')
+                            ->nullable(),
+                    ])
+                    ->label('Assign Licenses')
+                    ->columns(2),
+
             ]);
     }
 
