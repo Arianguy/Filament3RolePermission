@@ -90,235 +90,214 @@ class ComputerResource extends Resource
     {
         return $form
             ->schema([
-                Select::make('branch_id')
-                    ->label('Branch')
-                    ->options(function () {
-                        $user = Auth::user();
-
-                        // Retrieve IDs of branches, regions, and countries associated with the user
-                        $branchIds = $user->branches()->pluck('branches.id')->toArray();
-                        $regionIds = $user->regions()->pluck('regions.id')->toArray();
-                        $countryIds = $user->countries()->pluck('countries.id')->toArray();
-
-                        // Fetch branches the user has access to
-                        $branches = Branch::query()
-                            ->where(function ($query) use ($branchIds, $regionIds, $countryIds) {
-                                if (!empty($branchIds)) {
-                                    $query->orWhereIn('id', $branchIds);
-                                }
-
-                                if (!empty($regionIds)) {
-                                    $query->orWhereIn('region_id', $regionIds);
-                                }
-
-                                if (!empty($countryIds)) {
-                                    $query->orWhereIn('country_id', $countryIds);
-                                }
-                            })
-                            ->pluck('name', 'id');
-
-                        return $branches;
-                    })
-                    ->searchable()
-                    ->required()
-                    ->default(function () {
-                        $user = Auth::user();
-                        $branchIds = $user->branches()->pluck('branches.id')->toArray();
-
-                        // If the user has only one branch, set it as default
-                        if (count($branchIds) === 1) {
-                            return $branchIds[0];
-                        }
-
-                        return null;
-                    }),
-                TextInput::make('pc_code')
-                    ->label('PC Code')
-                    ->required()
-                    ->readOnly()
-                    ->default(fn() => strtoupper(Str::random(5)))
-                    ->dehydrated(true),
-                TextInput::make('name')->required(),
-                TextInput::make('imei')->required(),
-                TextInput::make('cost')->numeric()->required(),
-                DatePicker::make('purchase_date')->required(),
-                TextInput::make('warranty')->label('Warranty Months')->numeric()->required(),
-                Toggle::make('byod')->label('BYOD')->default(false),
-                Select::make('category_id')
-                    ->label('Category')
-                    ->relationship('category', 'name')
-                    ->preload()
-                    ->searchable()
-                    ->required()
-                    ->createOptionForm([
-                        TextInput::make('name')
-                            ->required()
-                            ->placeholder('Laptop'),
-                    ]),
-
-                Select::make('model_id')
-                    ->label('Model')
-                    ->relationship('computerModel', 'name', function ($query) {
-                        $query->with('brand');
-                    })
-                    ->getOptionLabelFromRecordUsing(function ($record) {
-                        return "{$record->brand->name}  {$record->name}";
-                    })
-                    ->searchable()
-                    ->preload()
-                    ->required()
-                    ->createOptionForm([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Model Name')
-                            ->required(),
-                        Forms\Components\Select::make('brand_id')
-                            ->label('Brand')
-                            ->relationship('brand', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->createOptionForm([
-                                TextInput::make('name')->label('Brand Name')->required(),
-                                TextInput::make('website')->url()->nullable(),
-                            ]),
-                    ]),
-                Select::make('supplier_id')
-                    ->label('Supplier')
-                    ->relationship('supplier', 'name')
-                    //->options(Supplier::all()->pluck('name', 'id'))
-                    ->searchable()
-                    ->required()
-                    ->createOptionForm([
-                        TextInput::make('name')->required(),
-                        TextInput::make('phone')->required(),
-                        TextInput::make('email')->required(),
-                        TextInput::make('contact_person')->required(),
-                    ]),
-                Select::make('cpu_id')
-                    ->label('CPU')
-                    ->relationship('cpu', 'name')
-                    ->searchable()
-                    ->required()
-                    ->preload()
-                    ->createOptionForm([
-                        TextInput::make('name')->required(),
-                        TextInput::make('core')->required(),
-                        TextInput::make('speed')->required(),
-                        TextInput::make('gen')->required(),
-                        TextInput::make('company')->required(),
-                    ]),
-                Select::make('ram_id')
-                    ->label('RAM')
-                    ->relationship('ram', 'id')
-                    ->getOptionLabelFromRecordUsing(function (RAM $ram) {
-                        return "{$ram->capacity} - {$ram->speed} MHz";
-                    })
-                    ->searchable()
-                    ->required()
-                    ->getSearchResultsUsing(function (string $searchQuery) {
-                        return RAM::query()
-                            ->where('capacity', 'like', "%{$searchQuery}%")
-                            ->orWhere('speed', 'like', "%{$searchQuery}%")
-                            ->get()
-                            ->mapWithKeys(function ($ram) {
-                                return [$ram->id => "{$ram->capacity} - {$ram->speed} MHz"];
-                            });
-                    })
-                    ->createOptionForm([
-                        TextInput::make('capacity')
-                            ->required()
-                            ->placeholder('8 GB'),
-                        TextInput::make('speed')
-                            ->required()
-                            ->placeholder('DDR5-5000'),
-                    ]),
-                Select::make('os_id')
-                    ->label('Operating System')
-                    ->options(OperatingSystem::pluck('name', 'id')->toArray())
-                    ->searchable()
-                    ->required()
-                    ->createOptionForm([
-                        TextInput::make('name')->required(),
-                        TextInput::make('type')->required(),
-                    ])
-                    ->createOptionUsing(function (array $data) {
-                        $operatingSystem = OperatingSystem::create($data);
-                        return $operatingSystem->id;
-                    }),
-                Select::make('vpn_id')
-                    ->label('VPN')
-                    ->relationship('vpn', 'name')
-                    ->searchable()
-                    ->required()
-                    ->preload()
-                    ->createOptionForm([
-                        TextInput::make('name')->required(),
-                        TextInput::make('pass')->required(),
-                    ]),
-
-                // Disks Repeater
-                Forms\Components\Repeater::make('disks')
-                    ->label('Disks')
+                // Branch and Basic Information Section
+                Forms\Components\Section::make('Basic Information')
+                    //->description('Provide the primary details of the computer.')
                     ->schema([
-                        TextInput::make('disk_name')
-                            ->label('Disk Name')
-                            ->required()
-                            ->placeholder('Disk 1'),
-                        TextInput::make('capacity')
-                            ->label('Capacity')
-                            ->required()
-                            ->placeholder('256 Gb'),
-                        Select::make('type')
-                            ->label('Type')
-                            ->options([
-                                'HDD' => 'HDD',
-                                'SSD' => 'SSD',
-                                'NVMe SSD' => 'NVMe SSD',
-                                'SATA SSD' => 'SATA SSD',
-                            ])
-                            ->required(),
-                        TextInput::make('speed')
-                            ->label('Speed')
-                            ->nullable()
-                            ->placeholder('5400 Rpm or 1050Mb/s'),
+                        Forms\Components\Grid::make(2)  // Two-column layout
+                            ->schema([
+                                Select::make('branch_id')
+                                    ->label('Branch')
+                                    ->options(function () {
+                                        $user = Auth::user();
+                                        // Fetch user branches, regions, and countries
+                                        $branchIds = $user->branches()->pluck('branches.id')->toArray();
+                                        $regionIds = $user->regions()->pluck('regions.id')->toArray();
+                                        $countryIds = $user->countries()->pluck('countries.id')->toArray();
+
+                                        // Fetch branches the user has access to
+                                        return Branch::query()
+                                            ->where(function ($query) use ($branchIds, $regionIds, $countryIds) {
+                                                if (!empty($branchIds)) {
+                                                    $query->orWhereIn('id', $branchIds);
+                                                }
+                                                if (!empty($regionIds)) {
+                                                    $query->orWhereIn('region_id', $regionIds);
+                                                }
+                                                if (!empty($countryIds)) {
+                                                    $query->orWhereIn('country_id', $countryIds);
+                                                }
+                                            })
+                                            ->pluck('name', 'id');
+                                    })
+                                    ->searchable()
+                                    ->required()
+                                    ->default(function () {
+                                        $user = Auth::user();
+                                        $branchIds = $user->branches()->pluck('branches.id')->toArray();
+                                        if (count($branchIds) === 1) {
+                                            return $branchIds[0];
+                                        }
+                                        return null;
+                                    })
+                                    ->helperText('Branch selection is based on user privileges.'),
+                                TextInput::make('pc_code')
+                                    ->label('PC Code')
+                                    ->required()
+                                    ->readOnly()
+                                    ->default(fn() => strtoupper(Str::random(5)))
+                                    ->helperText('Auto-generated unique code for this computer.'),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                TextInput::make('name')
+                                    ->label('Computer Name')
+                                    ->required()
+                                    ->placeholder('Enter the computer name'),
+                                TextInput::make('imei')
+                                    ->label('IMEI / Serial No')
+                                    ->required()
+                                    ->placeholder('Enter IMEI or Serial number'),
+                            ]),
+                    ])
+                    ->collapsible(),
+
+                // Purchase and Warranty Section
+                Forms\Components\Section::make('Purchase Details and Warranty details')
+                    //->description('Enter the purchase and warranty details for the computer.')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                TextInput::make('cost')
+                                    ->label('Cost (local Currency)')
+                                    ->numeric()
+                                    ->required()
+                                    ->placeholder('Enter the purchase cost in Local Currency'),
+                                DatePicker::make('purchase_date')
+                                    ->label('Purchase Date')
+                                    ->required(),
+                                // ->hint('When was this computer purchased?'),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                TextInput::make('warranty')
+                                    ->label('Warranty (Months)')
+                                    ->numeric()
+                                    ->required()
+                                    ->placeholder('Enter warranty duration in months'),
+                                Toggle::make('byod')
+                                    ->label('BYOD (Bring Your Own Device)')
+                                    ->default(false)
+                                    ->hint('Check this if the computer is a personal device used for work (BYOD).'),
+                            ]),
                     ])
                     ->collapsible()
-                    ->addActionLabel('Add Disk')
-                    ->columns(2),
+                    ->collapsed(),
 
-                Forms\Components\Repeater::make('installations')
-                    ->relationship('installations')  // Define the relationship to the Installation model
+                // Technical Specifications Section
+                Forms\Components\Section::make('Technical Specifications')
+                    // ->description('Enter the technical details like CPU, RAM, and category.')
                     ->schema([
-                        Forms\Components\Select::make('license_id')
-                            ->label('Software License')
-                            ->options(function () {
-                                return \App\Models\License::with('software')
-                                    ->get()
-                                    ->mapWithKeys(function ($license) {
-                                        return [
-                                            $license->id => optional($license->software)->name . ' - ' . $license->license_type,
-                                        ];
-                                    });
-                            })
-                            ->required()
-                            ->searchable(),  // Allows searching for a license
-                        Forms\Components\TextInput::make('key')
-                            ->label('License Key')
-                            ->nullable(),
-                        Forms\Components\TextInput::make('userid')
-                            ->label('User ID')
-                            ->nullable(),
-                        Forms\Components\TextInput::make('password')
-                            ->label('Password')
-                            // ->password()  // Masked input for password fields
-                            ->nullable(),
-                        Forms\Components\DatePicker::make('assigned_at')
-                            ->label('Assigned Date')
-                            ->nullable(),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Select::make('category_id')
+                                    ->label('Category')
+                                    ->relationship('category', 'name')
+                                    ->preload()
+                                    ->searchable()
+                                    ->required()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required()->placeholder('e.g., Laptop'),
+                                    ]),
+                                Select::make('model_id')
+                                    ->label('Model')
+                                    ->relationship('computerModel', 'name', function ($query) {
+                                        $query->with('brand');
+                                    })
+                                    ->getOptionLabelFromRecordUsing(function ($record) {
+                                        return "{$record->brand->name} {$record->name}";
+                                    })
+                                    ->searchable()
+                                    ->required()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->label('Model Name')->required(),
+                                        Select::make('brand_id')->label('Brand')->relationship('brand', 'name')->searchable()->required(),
+                                    ]),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Select::make('cpu_id')
+                                    ->label('CPU')
+                                    ->relationship('cpu', 'name')
+                                    ->searchable()
+                                    ->required()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required(),
+                                        TextInput::make('core')->required(),
+                                        TextInput::make('speed')->required(),
+                                    ]),
+                                Select::make('ram_id')
+                                    ->label('RAM')
+                                    ->relationship('ram', 'id')
+                                    ->getOptionLabelFromRecordUsing(function (RAM $ram) {
+                                        return "{$ram->capacity} - {$ram->speed} MHz";
+                                    })
+                                    ->searchable()
+                                    ->required()
+                                    ->getSearchResultsUsing(function (string $searchQuery) {
+                                        return RAM::query()
+                                            ->where('capacity', 'like', "%{$searchQuery}%")
+                                            ->orWhere('speed', 'like', "%{$searchQuery}%")
+                                            ->get()
+                                            ->mapWithKeys(function ($ram) {
+                                                return [$ram->id => "{$ram->capacity} - {$ram->speed} MHz"];
+                                            });
+                                    }),
+                            ]),
+                        Forms\Components\Section::make('Disks')
+                            ->description('Add the disk details for the computer.')
+                            ->schema([
+                                Forms\Components\Repeater::make('disks')
+                                    ->label('Disks')
+                                    ->schema([
+                                        TextInput::make('disk_name')->label('Disk Name')->required()->placeholder('e.g., Disk 1'),
+                                        TextInput::make('capacity')->label('Capacity')->required()->placeholder('e.g., 256 GB'),
+                                        Select::make('type')->label('Type')->options([
+                                            'HDD' => 'HDD',
+                                            'SSD' => 'SSD',
+                                            'NVMe SSD' => 'NVMe SSD',
+                                        ])->required(),
+                                        TextInput::make('speed')->label('Speed')->nullable()->placeholder('e.g., 5400 RPM or 1050 MB/s'),
+                                    ])
+                                    ->columns(2)
+                                    ->addActionLabel('Add Disk')
+                                    ->collapsible(),
+                            ])
+                            ->collapsible(),
                     ])
-                    ->label('Assign Licenses')
-                    ->columns(2),
+                    ->collapsible()
+                    ->collapsed(),
 
+                // Software Installations Section
+                Forms\Components\Section::make('Software Installations')
+                    ->description('Assign software licenses to this computer.')
+                    ->schema([
+                        Forms\Components\Repeater::make('installations')
+                            ->relationship('installations')  // Define the relationship to the Installation model
+                            ->schema([
+                                Select::make('license_id')
+                                    ->label('Software License')
+                                    ->options(function () {
+                                        return \App\Models\License::with('software')
+                                            ->get()
+                                            ->mapWithKeys(function ($license) {
+                                                return [
+                                                    $license->id => optional($license->software)->name . ' - ' . $license->license_type,
+                                                ];
+                                            });
+                                    })
+                                    ->required()
+                                    ->searchable(),
+                                TextInput::make('key')->label('License Key')->nullable(),
+                                TextInput::make('userid')->label('User ID')->nullable(),
+                                TextInput::make('password')->label('Password')->nullable(),
+                                DatePicker::make('assigned_at')->label('Assigned Date')->nullable(),
+                            ])
+                            ->columns(2)
+                            ->collapsible(),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
             ]);
     }
 
