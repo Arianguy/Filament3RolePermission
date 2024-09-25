@@ -126,9 +126,39 @@ class InstallationResource extends Resource
             ])
 
             ->filters([
-                //
+                Tables\Filters\Filter::make('branch_id')
+                    ->form([
+                        Forms\Components\Select::make('branch_id')
+                            ->label('Branch')
+                            ->options(function () {
+                                return \App\Models\Branch::pluck('name', 'id');  // Fetch branches from Branch model
+                            })
+                            ->searchable()
+                            ->placeholder('Select a Branch'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query->when(
+                            $data['branch_id'],
+                            fn($query, $branchId) =>
+                            $query->whereHas('computer', fn($query) => $query->where('branch_id', $branchId))  // Accessing branch_id via computer relationship
+                        );
+                    })
+                    ->label('Branch'),
+
+                Tables\Filters\Filter::make('assigned_at')
+                    ->form([
+                        Forms\Components\DatePicker::make('from'),
+                        Forms\Components\DatePicker::make('until'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['from'], fn($query) => $query->whereDate('assigned_at', '>=', $data['from']))
+                            ->when($data['until'], fn($query) => $query->whereDate('assigned_at', '<=', $data['until']));
+                    })
+                    ->label('Assigned Date Range'),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

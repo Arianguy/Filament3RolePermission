@@ -29,7 +29,9 @@ use Filament\Forms\ComponentContainer;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Infolists\Components\Section;
 use App\Filament\Resources\ComputerResource\Pages;
@@ -391,8 +393,13 @@ class ComputerResource extends Resource
                     ]),
             ])
             ->filters([
-                //
-            ])
+                SelectFilter::make('Branch')
+                    ->relationship('branch', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->indicator('Contract '),
+            ], layout: FiltersLayout::Modal)
+
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
