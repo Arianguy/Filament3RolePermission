@@ -412,7 +412,7 @@ class ComputerResource extends Resource
                         //->label('Details')
                         ->icon('heroicon-o-eye')
                         // ->modalHeading('Computer Details')
-                        ->modalWidth('7xl') // Ensure the modal is wide enough for a two-column layout
+                        ->modalWidth('4xl') // Ensure the modal is wide enough for a two-column layout
                         ->modalContent(function ($record) {
                             return view('filament.computers.details-modal', ['record' => $record]);
                         })
