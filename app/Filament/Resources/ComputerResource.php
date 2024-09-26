@@ -21,6 +21,7 @@ use Tables\Columns\TextColumn;
 use App\Models\OperatingSystem;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\View;
+use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
@@ -28,6 +29,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\ComponentContainer;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Forms\Components\DatePicker;
@@ -401,7 +403,21 @@ class ComputerResource extends Resource
             ], layout: FiltersLayout::Modal)
 
             ->actions([
-                Tables\Actions\EditAction::make(),
+                ActionGroup::make([
+                    // Edit action
+                    Tables\Actions\EditAction::make(),
+
+                    // Custom 'Details' action
+                    Action::make('details')
+                        //->label('Details')
+                        ->icon('heroicon-o-eye')
+                        // ->modalHeading('Computer Details')
+                        ->modalWidth('7xl') // Ensure the modal is wide enough for a two-column layout
+                        ->modalContent(function ($record) {
+                            return view('filament.computers.details-modal', ['record' => $record]);
+                        })
+                        ->modalActions([]), // Hide default modal actions
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
