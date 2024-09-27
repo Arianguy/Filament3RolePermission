@@ -37,4 +37,9 @@ class Branch extends Model
     {
         return $this->belongsToMany(User::class, 'user_branches');
     }
+
+    public function emailAccounts()
+    {
+        return $this->hasMany(EmailAccount::class);
+    }
 }

@@ -94,4 +94,11 @@ class Computer extends Model
     {
         return $this->hasMany(Installation::class);
     }
+
+    public function emailAccounts()
+    {
+        return $this->belongsToMany(EmailAccount::class, 'computer_email_account')
+            ->using(ComputerEmailAccount::class)
+            ->withPivot('configured_at'); // Add any other fields
+    }
 }

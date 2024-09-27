@@ -1,23 +1,13 @@
 <!-- resources/views/filament/computers/details-modal.blade.php -->
-<div class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-xl p-8">
-    <!-- Header Section (unchanged) -->
-    <header class="mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
-        <h2 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
-            Computer Details: {{ $record->name }}
-        </h2>
-        <p class="text-gray-600 dark:text-gray-300">
-            Comprehensive information about the selected computer
-        </p>
-    </header>
-
+<div class="bg-gray-100 dark:bg-gray-800 rounded-xl shadow-lg p-6">
     <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column: Basic Information (unchanged) -->
-        <section class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h3 class="text-xl font-semibold mb-4 text-indigo-500 dark:text-indigo-300">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Basic Information -->
+        <section class="bg-white dark:bg-gray-700 rounded-lg shadow p-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
                 Basic Information
             </h3>
-            <div class="space-y-4">
+            <div class="space-y-3">
                 @php
                     $basicInfo = [
                         'Branch' => $record->branch->name ?? 'N/A',
@@ -27,21 +17,21 @@
                     ];
                 @endphp
                 @foreach ($basicInfo as $label => $value)
-                    <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2">
-                        <strong class="text-gray-600 dark:text-gray-400">{{ $label }}</strong>
+                    <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-2">
+                        <span class="text-gray-600 dark:text-gray-400">{{ $label }}</span>
                         <span class="text-gray-800 dark:text-gray-200">{{ $value }}</span>
                     </div>
                 @endforeach
             </div>
         </section>
 
-        <!-- Middle Column: Technical Specifications, Disks & Purchase Details -->
-        <section class="space-y-8">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 class="text-xl font-semibold mb-4 text-indigo-500 dark:text-indigo-300">
+        <!-- Middle Column: Technical Specifications -->
+        <section class="space-y-6">
+            <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
                     Technical Specifications
                 </h3>
-                <div class="space-y-4">
+                <div class="space-y-3">
                     @php
                         $techSpecs = [
                             'Category' => $record->category->name ?? 'N/A',
@@ -51,62 +41,87 @@
                         ];
                     @endphp
                     @foreach ($techSpecs as $label => $value)
-                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2">
-                            <strong class="text-gray-600 dark:text-gray-400">{{ $label }}</strong>
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-2">
+                            <span class="text-gray-600 dark:text-gray-400">{{ $label }}</span>
                             <span class="text-gray-800 dark:text-gray-200">{{ $value }}</span>
                         </div>
                     @endforeach
                 </div>
-
                 <!-- Disks Information -->
-                <h4 class="text-lg font-semibold mt-6 mb-3 text-indigo-500 dark:text-indigo-300">
+                <h4 class="text-md  mt-4 mb-2 text-gray-600 dark:text-gray-400">
                     Disks
                 </h4>
                 <div class="space-y-2">
-                    @foreach ($record->disks ?? [] as $disk)
-                        <div class="flex items-center space-x-2 text-sm">
-                            <span class="text-gray-600 dark:text-gray-400">{{ $disk['disk_name'] }}:</span>
-                            <span class="text-gray-800 dark:text-gray-200">{{ $disk['capacity'] }} {{ $disk['type'] }}</span>
-                            @if($disk['speed'])
-                                <span class="text-gray-600 dark:text-gray-400">({{ $disk['speed'] }})</span>
-                            @endif
+                    @foreach ($record->disks ?? [] as $index => $disk)
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-2">
+                            <span class="text-gray-600 dark:text-gray-400 invisible">Placeholder</span>
+                            <div class="text-right">
+                                <span class="text-gray-600 dark:text-gray-400 mr-2">Disk {{ $index + 1 }}</span>
+                                <span class="text-gray-800 dark:text-gray-200">
+                                    {{ $disk['capacity'] }} {{ $disk['type'] }}
+                                    @if($disk['speed'])
+                                        ({{ $disk['speed'] }})
+                                    @endif
+                                </span>
+                            </div>
                         </div>
                     @endforeach
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 class="text-xl font-semibold mb-4 text-indigo-500 dark:text-indigo-300">
-                    Purchase Details and Warranty
-                </h3>
-                <div class="space-y-4">
-                    @php
+            <!-- Purchase Details and Warranty -->
+            <section class="space-y-6">
+                <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-4">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
+                        Purchase Details and Warranty
+                    </h3>
+                    <div class="space-y-3">
+                        @php
+                        $purchaseDate = $record->purchase_date;
+                        $warrantyMonths = $record->warranty;
+                        $warrantyEndDate = $purchaseDate->copy()->addMonths($warrantyMonths);
+                        $today = now();
+                        $daysRemaining = $today->diffInDays($warrantyEndDate, false);
+                        $daysRounded = round($daysRemaining, 1);
                         $purchaseInfo = [
                             'Cost' => number_format($record->cost, 2) . ' (local currency)',
-                            'Purchase Date' => $record->purchase_date->format('Y-m-d'),
-                            'Warranty' => $record->warranty . ' months',
+                            'Purchase Date' => $purchaseDate->format('Y-m-d'),
+                            'Warranty' => $warrantyMonths . ' months',
                             'BYOD' => $record->byod ? 'Yes' : 'No',
                         ];
-                    @endphp
-                    @foreach ($purchaseInfo as $label => $value)
-                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2">
-                            <strong class="text-gray-600 dark:text-gray-400">{{ $label }}</strong>
-                            <span class="text-gray-800 dark:text-gray-200">{{ $value }}</span>
+                        @endphp
+                        @foreach ($purchaseInfo as $label => $value)
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-2">
+                            <span class="text-gray-600 dark:text-gray-400">{{ $label }}</span>
+                            <div class="text-right">
+                                @if ($label === 'Warranty')
+                                    <span class="text-gray-800 dark:text-gray-200">
+                                        {{ $value }}
+                                    </span>
+                                    <span class="ml-1 font-semibold {{ $daysRounded > 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400' }}" style="color: {{ $daysRounded > 0 ? '#10B981' : '#EF4444' }};">
+                                        ({{ abs($daysRounded) }} days {{ $daysRounded > 0 ? 'remaining' : 'expired' }})
+                                    </span>
+                                @else
+                                    <span class="text-gray-800 dark:text-gray-200">
+                                        {{ $value }}
+                                    </span>
+                                @endif
+                            </div>
                         </div>
-                    @endforeach
+                        @endforeach
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Right Column: Software Installations (unchanged) -->
-        <section class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h3 class="text-xl font-semibold mb-4 text-indigo-500 dark:text-indigo-300">
+        <!-- Right Column: Software Installations -->
+        <section class="bg-white dark:bg-gray-700 rounded-lg shadow p-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
                 Software Installations
             </h3>
-            <div class="space-y-6">
+            <div class="space-y-4">
                 @foreach ($record->installations as $installation)
-                    <div class="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0 last:pb-0">
-                        <h4 class="font-semibold text-lg mb-2 text-indigo-600 dark:text-indigo-400">
+                    <div class="border-b border-gray-200 dark:border-gray-600 pb-3 last:border-b-0 last:pb-0">
+                        <h4 class="font-semibold text-md mb-2 text-gray-700 dark:text-gray-300">
                             {{ optional($installation->license->software)->name ?? 'N/A' }}
                         </h4>
                         @php
@@ -118,8 +133,8 @@
                             ];
                         @endphp
                         @foreach ($installationDetails as $label => $value)
-                            <div class="flex justify-between items-center mb-2">
-                                <strong class="text-gray-600 dark:text-gray-400">{{ $label }}</strong>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-gray-600 dark:text-gray-400">{{ $label }}</span>
                                 <span class="text-gray-800 dark:text-gray-200">{{ $value }}</span>
                             </div>
                         @endforeach

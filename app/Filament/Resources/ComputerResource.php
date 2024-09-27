@@ -254,14 +254,23 @@ class ComputerResource extends Resource
                                 Forms\Components\Repeater::make('disks')
                                     ->label('Disks')
                                     ->schema([
-                                        TextInput::make('disk_name')->label('Disk Name')->required()->placeholder('e.g., Disk 1'),
-                                        TextInput::make('capacity')->label('Capacity')->required()->placeholder('e.g., 256 GB'),
+                                        //TextInput::make('disk_name')->label('Disk Name')->required()->placeholder('e.g., Disk 1'),
+                                        Select::make('type')->label('Type')->options([
+                                            'Disk 0' => 'Disk 0',
+                                            'Disk 1' => 'Disk 1',
+                                            'Disk 2' => 'Disk 2',
+                                            'Disk 3' => 'Disk 3',
+                                            'Disk 4' => 'Disk 4',
+                                        ])->required(),
+                                        TextInput::make('capacity')->label('Capacity')->required()->placeholder('e.g., 256 GB')
+                                            ->helperText('GB or TB'),
                                         Select::make('type')->label('Type')->options([
                                             'HDD' => 'HDD',
                                             'SSD' => 'SSD',
                                             'NVMe SSD' => 'NVMe SSD',
                                         ])->required(),
-                                        TextInput::make('speed')->label('Speed')->nullable()->placeholder('e.g., 5400 RPM or 1050 MB/s'),
+                                        TextInput::make('speed')->label('Speed')->nullable()->placeholder('e.g. 1050 MB/s')
+                                            ->helperText('GB/s or MB/s'),
                                     ])
                                     ->columns(2)
                                     ->addActionLabel('Add Disk')
@@ -302,6 +311,10 @@ class ComputerResource extends Resource
                     ])
                     ->collapsible()
                     ->collapsed(),
+
+                Forms\Components\MultiSelect::make('emailAccounts')
+                    ->relationship('emailAccounts', 'email_address')
+                    ->label('Configured Email Accounts'),
             ]);
     }
 
@@ -406,7 +419,6 @@ class ComputerResource extends Resource
                 ActionGroup::make([
                     // Edit action
                     Tables\Actions\EditAction::make(),
-
                     // Custom 'Details' action
                     Action::make('details')
                         //->label('Details')
@@ -416,7 +428,8 @@ class ComputerResource extends Resource
                         ->modalContent(function ($record) {
                             return view('filament.computers.details-modal', ['record' => $record]);
                         })
-                        ->modalActions([]), // Hide default modal actions
+                        ->modalHeading(null) // Remove the modal title
+                        ->modalActions([]),
                 ]),
             ])
             ->bulkActions([
