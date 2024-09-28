@@ -36,7 +36,7 @@
                         $techSpecs = [
                             'Category' => $record->category->name ?? 'N/A',
                             'Model' => (optional($record->computerModel->brand)->name . ' ' . ($record->computerModel->name ?? 'N/A')),
-                            'CPU' => $record->cpu->name ?? 'N/A',
+                          'CPU' => $record->cpu ? "{$record->cpu->name} ({$record->cpu->core} cores, {$record->cpu->speed})" : 'N/A',
                             'RAM' => ($record->ram->capacity ?? 'N/A') . ' - ' . ($record->ram->speed ?? 'N/A') . ' MHz',
                         ];
                     @endphp
@@ -82,7 +82,7 @@
                         $warrantyEndDate = $purchaseDate->copy()->addMonths($warrantyMonths);
                         $today = now();
                         $daysRemaining = $today->diffInDays($warrantyEndDate, false);
-                        $daysRounded = round($daysRemaining, 1);
+                        $daysRounded = (int)$daysRemaining; // Remove decimal
                         $purchaseInfo = [
                             'Cost' => number_format($record->cost, 2) . ' (local currency)',
                             'Purchase Date' => $purchaseDate->format('Y-m-d'),
@@ -98,9 +98,12 @@
                                     <span class="text-gray-800 dark:text-gray-200">
                                         {{ $value }}
                                     </span>
-                                    <span class="ml-1 font-semibold {{ $daysRounded > 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400' }}" style="color: {{ $daysRounded > 0 ? '#10B981' : '#EF4444' }};">
-                                        ({{ abs($daysRounded) }} days {{ $daysRounded > 0 ? 'remaining' : 'expired' }})
-                                    </span>
+                                    <x-filament::badge
+                                        :color="$daysRounded > 0 ? 'success' : 'danger'"
+                                        class="ml-2"
+                                    >
+                                        {{ abs($daysRounded) }} days {{ $daysRounded > 0 ? 'remaining' : 'expired' }}
+                                    </x-filament::badge>
                                 @else
                                     <span class="text-gray-800 dark:text-gray-200">
                                         {{ $value }}

@@ -223,12 +223,21 @@ class ComputerResource extends Resource
                                 Select::make('cpu_id')
                                     ->label('CPU')
                                     ->relationship('cpu', 'name')
+                                    ->getOptionLabelUsing(function ($value): ?string {
+                                        $cpu = \App\Models\Cpu::find($value);
+                                        if (!$cpu) {
+                                            return null;
+                                        }
+                                        return "{$cpu->company} {$cpu->name} - {$cpu->core} cores, {$cpu->speed}, Gen {$cpu->gen}";
+                                    })
                                     ->searchable()
                                     ->required()
                                     ->createOptionForm([
+                                        TextInput::make('company')->required(),
                                         TextInput::make('name')->required(),
                                         TextInput::make('core')->required(),
                                         TextInput::make('speed')->required(),
+                                        TextInput::make('gen')->required(),
                                     ]),
                                 Select::make('ram_id')
                                     ->label('RAM')
