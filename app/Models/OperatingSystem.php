@@ -14,6 +14,6 @@ class OperatingSystem extends Model
     // Relationships
     public function computers()
     {
-        return $this->hasMany(Computer::class, 'os_id');
+        return $this->belongsTo(OperatingSystem::class, 'os_id');
     }
 }

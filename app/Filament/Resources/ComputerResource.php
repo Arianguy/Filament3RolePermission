@@ -20,6 +20,7 @@ use Filament\Facades\Filament;
 use Tables\Columns\TextColumn;
 use App\Models\OperatingSystem;
 use Filament\Resources\Resource;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\View;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Log;
@@ -192,7 +193,7 @@ class ComputerResource extends Resource
                 Forms\Components\Section::make('Technical Specifications')
                     // ->description('Enter the technical details like CPU, RAM, and category.')
                     ->schema([
-                        Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(3)
                             ->schema([
                                 Select::make('category_id')
                                     ->label('Category')
@@ -203,6 +204,16 @@ class ComputerResource extends Resource
                                     ->createOptionForm([
                                         TextInput::make('name')->required()->placeholder('e.g., Laptop'),
                                     ]),
+                                Select::make('os_id')
+                                    ->label('OS Name')
+                                    ->relationship('os', 'name') // Must match the method name in the Computer model
+                                    ->preload()
+                                    ->searchable()
+                                    ->required()
+                                    ->createOptionForm([
+                                        TextInput::make('name')->required()->placeholder('e.g., Windows 10'),
+                                    ]),
+
                                 Select::make('model_id')
                                     ->label('Model')
                                     ->relationship('computerModel', 'name', function ($query) {
