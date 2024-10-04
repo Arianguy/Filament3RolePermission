@@ -233,23 +233,50 @@ class ComputerResource extends Resource
                             ->schema([
                                 Select::make('cpu_id')
                                     ->label('CPU')
-                                    ->relationship('cpu', 'name')
-                                    ->getOptionLabelUsing(function ($value): ?string {
-                                        $cpu = \App\Models\Cpu::find($value);
-                                        if (!$cpu) {
-                                            return null;
-                                        }
-                                        return "{$cpu->company} {$cpu->name} - {$cpu->core} cores, {$cpu->speed}, Gen {$cpu->gen}";
+                                    ->options(function () {
+                                        return Cpu::all()->mapWithKeys(function ($cpu) {
+                                            $label = "{$cpu->company} {$cpu->name} - {$cpu->core} cores, {$cpu->speed}, Gen {$cpu->gen}";
+                                            return [$cpu->id => $label];
+                                        });
+                                    })
+                                    ->getSearchResultsUsing(function (string $search) {
+                                        return Cpu::where('name', 'like', "%{$search}%")
+                                            ->orWhere('company', 'like', "%{$search}%")
+                                            ->orWhere('core', 'like', "%{$search}%")
+                                            ->orWhere('speed', 'like', "%{$search}%")
+                                            ->orWhere('gen', 'like', "%{$search}%")
+                                            ->get()
+                                            ->mapWithKeys(function ($cpu) {
+                                                $label = "{$cpu->company} {$cpu->name} - {$cpu->core} cores, {$cpu->speed}, Gen {$cpu->gen}";
+                                                return [$cpu->id => $label];
+                                            });
                                     })
                                     ->searchable()
                                     ->required()
                                     ->createOptionForm([
-                                        TextInput::make('company')->required(),
-                                        TextInput::make('name')->required(),
-                                        TextInput::make('core')->required(),
-                                        TextInput::make('speed')->required(),
-                                        TextInput::make('gen')->required(),
-                                    ]),
+                                        TextInput::make('company')
+                                            ->required()
+                                            ->hint('e.g., Intel, AMD'),
+                                        TextInput::make('name')
+                                            ->required()
+                                            ->hint('e.g., Core i7-10700K, Ryzen 7 5800X'),
+                                        TextInput::make('core')
+                                            ->numeric()
+                                            ->required()
+                                            ->hint('Number of cores'),
+                                        TextInput::make('speed')
+                                            ->required()
+                                            ->hint('e.g., 3.8 GHz'),
+                                        TextInput::make('gen')
+                                            ->numeric()
+                                            ->required()
+                                            ->hint('Generation number'),
+                                    ])
+                                    ->createOptionUsing(function (array $data) {
+                                        $cpu = Cpu::create($data);
+                                        return $cpu->id;
+                                    }),
+
                                 Select::make('ram_id')
                                     ->label('RAM')
                                     ->relationship('ram', 'id')
