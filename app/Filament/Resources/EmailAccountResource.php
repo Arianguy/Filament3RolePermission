@@ -39,7 +39,7 @@ class EmailAccountResource extends Resource
                     ->required(),
                 Forms\Components\TextInput::make('main_password')->password()->required(),
                 Forms\Components\TextInput::make('pc_outlook_password')->password()->required(),
-                Forms\Components\TextInput::make('ios_outlook_password')->password()->required(),
+                Forms\Components\TextInput::make('i0os_outlook_password')->password()->required(),
                 Forms\Components\TextInput::make('android_outlook_password')->password()->required(),
                 Forms\Components\TextInput::make('other_password')->password()->required(),
                 Forms\Components\TextInput::make('recovery_email')->email()->required(),
