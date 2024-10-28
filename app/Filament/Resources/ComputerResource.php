@@ -302,7 +302,7 @@ class ComputerResource extends Resource
                                     ->label('Disks')
                                     ->schema([
                                         //TextInput::make('disk_name')->label('Disk Name')->required()->placeholder('e.g., Disk 1'),
-                                        Select::make('type')->label('Type')->options([
+                                        Select::make('disk')->label('Disk')->options([
                                             'Disk 0' => 'Disk 0',
                                             'Disk 1' => 'Disk 1',
                                             'Disk 2' => 'Disk 2',
@@ -412,7 +412,7 @@ class ComputerResource extends Resource
                         if (is_array($state) && !empty($state)) {
                             // Map each disk's information into the desired format
                             $formattedDisks = array_map(function ($disk) {
-                                $diskName = $disk['disk_name'] ?? 'Unnamed Disk';
+                                $diskName = $disk['disk'] ?? 'Unnamed Disk';
                                 $capacity = $disk['capacity'] ?? 'Unknown Capacity';
                                 $type = $disk['type'] ?? 'Unknown Type';
                                 $interface = $disk['speed'] ?? 'Unknown Interface';
