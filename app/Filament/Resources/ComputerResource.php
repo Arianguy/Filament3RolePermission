@@ -212,6 +212,7 @@ class ComputerResource extends Resource
                                     ->required()
                                     ->createOptionForm([
                                         TextInput::make('name')->required()->placeholder('e.g., Windows 10'),
+                                        TextInput::make('type')->required()->placeholder('e.g., Linux'),
                                     ]),
 
                                 Select::make('model_id')
@@ -226,7 +227,13 @@ class ComputerResource extends Resource
                                     ->required()
                                     ->createOptionForm([
                                         TextInput::make('name')->label('Model Name')->required(),
-                                        Select::make('brand_id')->label('Brand')->relationship('brand', 'name')->searchable()->required(),
+                                        Select::make('brand_id')->label('Brand')->relationship('brand', 'name')->searchable()->required()
+                                            ->createOptionForm([
+                                                TextInput::make('name')
+                                                    ->label('Brand Name')
+                                                    ->required()
+                                                    ->unique(),
+                                            ]),
                                     ]),
                             ]),
                         Forms\Components\Grid::make(2)
