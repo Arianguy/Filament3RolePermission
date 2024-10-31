@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Log;
+use App\Observers\InstallationObserver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Installation extends Model
 {
@@ -22,6 +24,19 @@ class Installation extends Model
     protected $casts = [
         'assigned_at' => 'datetime',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Only keep the debug logging
+        static::created(function ($installation) {
+            Log::info('Installation Created Event Fired', [
+                'installation_id' => $installation->id,
+                'license_id' => $installation->license_id
+            ]);
+        });
+    }
 
 
     public function computer()

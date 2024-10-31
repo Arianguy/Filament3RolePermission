@@ -98,9 +98,11 @@ class EmailAccountResource extends Resource
                 TextColumn::make('recovery_mobile')
                     ->label('Recovery Mobile')
                     ->sortable(),
-                TextColumn::make('computers.name')
+                BadgeColumn::make('computers.name')
                     ->label('Assigned Computers')
-                    ->getStateUsing(fn($record) => $record->computers->pluck('name')->join(', ')),
+                    ->getStateUsing(fn($record) => $record->computers->pluck('name')->join(', '))
+                    ->colors(['info'])
+                    ->separator(','),
             ])
             ->filters([
                 //
