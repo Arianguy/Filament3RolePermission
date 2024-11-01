@@ -9,6 +9,7 @@ use App\Models\Vpn;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Brand;
+use Widgets\Computers;
 use App\Models\Category;
 use App\Models\Computer;
 use App\Models\Supplier;
@@ -18,6 +19,7 @@ use Illuminate\Support\Str;
 use App\Models\ComputerModel;
 use Filament\Facades\Filament;
 use Tables\Columns\TextColumn;
+use Widgets\ComputersOverview;
 use App\Models\OperatingSystem;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Grid;
@@ -41,6 +43,7 @@ use App\Filament\Resources\ComputerResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ComputerResource\RelationManagers;
 use App\Models\Branch; // Ensure you include this use statement
+use App\Filament\Resources\ComputerResource\Widgets;
 
 class ComputerResource extends Resource
 {
@@ -202,7 +205,7 @@ class ComputerResource extends Resource
                                     ->searchable()
                                     ->required()
                                     ->createOptionForm([
-                                        TextInput::make('name')->required()->placeholder('e.g., Laptop'),
+                                        TextInput::make('name')->required()->placeholder('e.g., Laptop')->unique(),
                                     ]),
                                 Select::make('os_id')
                                     ->label('OS Name')
@@ -211,8 +214,8 @@ class ComputerResource extends Resource
                                     ->searchable()
                                     ->required()
                                     ->createOptionForm([
-                                        TextInput::make('name')->required()->placeholder('e.g., Windows 10'),
-                                        TextInput::make('type')->required()->placeholder('e.g., Linux'),
+                                        TextInput::make('name')->required()->placeholder('e.g., Windows 10')->unique(),
+                                        TextInput::make('type')->required()->placeholder('e.g., Linux')->unique(),
                                     ]),
 
                                 Select::make('model_id')
@@ -501,6 +504,12 @@ class ComputerResource extends Resource
         ];
     }
 
+    public static function getWidgets(): array
+    {
+        return [
+            Widgets\ComputersOverview::class,
+        ];
+    }
     public static function getPages(): array
     {
         return [

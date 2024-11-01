@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\ComputerResource\Pages;
 
-use App\Filament\Resources\ComputerResource;
 use Filament\Actions;
+use Widgets\Computer;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\ComputerResource;
+use App\Filament\Resources\ComputerResource\Widgets\Computers;
+use App\Filament\Resources\ComputerResource\Widgets\ComputersOverview;
 
 class ListComputers extends ListRecords
 {
@@ -14,6 +17,20 @@ class ListComputers extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            ComputersOverview::class,
+        ];
+    }
+
+    protected function getWidgets(): array
+    {
+        return [
+            ComputersOverview::class,
         ];
     }
 }
