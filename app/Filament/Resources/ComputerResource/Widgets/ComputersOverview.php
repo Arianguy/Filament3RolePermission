@@ -7,8 +7,10 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use App\Models\Computer;
 use App\Models\Branch;
 use App\Models\Region;
+use App\Models\Country;
 use Illuminate\Support\Facades\Auth;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Carbon\Carbon;
 
 class ComputersOverview extends BaseWidget
 {
@@ -108,13 +110,101 @@ class ComputersOverview extends BaseWidget
 
     private function getCostStat($query): Stat
     {
-        $totalCost = $query->clone()->sum('cost');
-        $formattedCost = number_format($totalCost, 2);
+        $user = Auth::user();
+        $totalUsdCost = 0;
 
-        return Stat::make('Total Investment', "$ {$formattedCost}")
-            ->description('Total computer costs')
+        // Clone the query and eager load relationships
+        $computersQuery = $query->clone()->with(['branch.country']);
+        $computers = $computersQuery->get();
+
+        foreach ($computers as $computer) {
+            if ($computer->branch && $computer->branch->country) {
+                $country = $computer->branch->country;
+                $totalUsdCost += $computer->cost / $country->exc_rate;
+            } else {
+                $totalUsdCost += $computer->cost;
+            }
+        }
+
+        $formattedCost = number_format($totalUsdCost, 2);
+        $description = $this->getCostDescription($user);
+
+        return Stat::make('Total Investment (USD)', "$ {$formattedCost}")
+            ->description($description)
             ->descriptionIcon('heroicon-m-currency-dollar')
-            ->color('warning');
+            ->color('warning')
+            ->chart($this->getInvestmentTrend($query));
+    }
+
+    private function getCostDescription($user): string
+    {
+        if ($user->hasRole('super_admin')) {
+            return 'Total investment across all countries';
+        }
+
+        $descriptions = [];
+
+        // Check country assignments
+        if ($user->countries->isNotEmpty()) {
+            $countryInfo = $user->countries->map(function ($country) {
+                $total = Computer::whereHas('branch', function ($query) use ($country) {
+                    $query->where('country_id', $country->id);
+                })->sum('cost');
+                $usdTotal = $total / $country->exc_rate;
+                return "{$country->name}: $" . number_format($usdTotal, 2);
+            })->join(', ');
+            $descriptions[] = "Countries: {$countryInfo}";
+        }
+
+        // Check region assignments
+        if ($user->regions->isNotEmpty()) {
+            $regionInfo = $user->regions->map(function ($region) {
+                $total = Computer::whereHas('branch', function ($query) use ($region) {
+                    $query->where('region_id', $region->id);
+                })->sum('cost');
+                $usdTotal = $total / $region->country->exc_rate;
+                return "{$region->name}: $" . number_format($usdTotal, 2);
+            })->join(', ');
+            $descriptions[] = "Regions: {$regionInfo}";
+        }
+
+        // Check branch assignments
+        if ($user->branches->isNotEmpty()) {
+            $branchInfo = $user->branches->map(function ($branch) {
+                $total = Computer::where('branch_id', $branch->id)->sum('cost');
+                $usdTotal = $total / $branch->country->exc_rate;
+                return "{$branch->name}: $" . number_format($usdTotal, 2);
+            })->join(', ');
+            $descriptions[] = "Branches: {$branchInfo}";
+        }
+
+        if (empty($descriptions)) {
+            return 'No assigned scope';
+        }
+
+        return implode(' | ', $descriptions);
+    }
+
+    private function getInvestmentTrend($query): array
+    {
+        $trends = [];
+        $startDate = now()->subMonths(11)->startOfMonth();
+
+        for ($i = 0; $i < 12; $i++) {
+            $date = $startDate->copy()->addMonths($i);
+            $monthlyTotal = $query->clone()
+                ->whereYear('purchase_date', $date->year)
+                ->whereMonth('purchase_date', $date->month)
+                ->with(['branch.country'])
+                ->get()
+                ->sum(function ($computer) {
+                    return $computer->cost / ($computer->branch->country->exc_rate ?? 1);
+                });
+
+            $trends[] = $monthlyTotal;
+        }
+
+        return $trends;
     }
 
     private function getScopeDescription($user): string

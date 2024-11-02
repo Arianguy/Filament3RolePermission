@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('code', 3); // 3-character short code
+            $table->string('currency', 5);
+            $table->decimal('exc_rate', 6, 3)->default(1.000);
             $table->timestamps();
         });
     }
